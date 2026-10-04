@@ -15,11 +15,37 @@ const paymentItems=['10% of the contract value will be taken as token and we wil
 function amountInWords(value){const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];const underThousand=n=>{let words='';if(n>=100){words+=`${ones[Math.floor(n/100)]} Hundred`;n%=100;if(n)words+=' '}if(n>=20){words+=tens[Math.floor(n/10)];if(n%10)words+=` ${ones[n%10]}`}else if(n)words+=ones[n];return words};let n=Math.round(Number(value)||0);if(!n)return 'Rupees Zero Only';const groups=[['Crore',10000000],['Lakh',100000],['Thousand',1000]];let words='';groups.forEach(([name,size])=>{if(n>=size){words+=`${underThousand(Math.floor(n/size))} ${name} `;n%=size}});if(n)words+=underThousand(n);return `Rupees ${words.trim()} Only`}
 function formalTermsHtml(){const word=documentMode==='final'?'final quotation':'estimated quotation';const terms=[`Any additional works required by you other than the above ${word} will be quoted and billed separately.`,...noteItems.slice(1)];return `<b>NOTE:</b><br>${terms.map(item=>`&bull; ${item}`).join('<br>')}<br><br><b>PAYMENT TERMS:</b><br>${paymentItems.map(item=>`&bull; ${item}`).join('<br>')}<br><br>If you have any questions or need changes, please feel free to contact us. We are committed to delivering quality service and look forward to working with you.<br><br>Thank you for considering our proposal. We await your response.`}
 function qty(row){return row.l!==''&&row.h!==''?Number(row.l||0)*Number(row.h||0):Number(row.qty||0)}
+function enableArrowNavigation(root,selector,keyName){
+  if(root.dataset.arrowNavigation)return;
+  root.dataset.arrowNavigation='true';
+  root.addEventListener('keydown',event=>{
+    if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
+    const control=event.target.closest(selector);
+    if(!control)return;
+    const controls=[...root.querySelectorAll(selector)];
+    const position=controls.indexOf(control);
+    const isText=control.tagName==='INPUT'&&control.type==='text';
+    if(isText&&event.key==='ArrowLeft'&&control.selectionStart>0)return;
+    if(isText&&event.key==='ArrowRight'&&control.selectionStart<control.value.length)return;
+    let target;
+    if(event.key==='ArrowLeft')target=controls[position-1];
+    if(event.key==='ArrowRight')target=controls[position+1];
+    if(event.key==='ArrowUp'||event.key==='ArrowDown'){
+      const column=controls.filter(item=>item.dataset[keyName]===control.dataset[keyName]);
+      target=column[column.indexOf(control)+(event.key==='ArrowUp'?-1:1)];
+    }
+    if(!target)return;
+    event.preventDefault();
+    target.focus();
+    if(target.tagName==='INPUT'&&target.type==='text')target.select();
+  });
+}
 function refreshModeUi(){const final=documentMode==='final';document.body.dataset.mode=documentMode;$('estimatedMode').classList.toggle('active',!final);$('estimatedMode').setAttribute('aria-pressed',String(!final));$('finalMode').classList.toggle('active',final);$('finalMode').setAttribute('aria-pressed',String(final));$('modeKicker').textContent=quotationTitle();$('liveMode').textContent=final?'LIVE FINAL QUOTATION':'LIVE ESTIMATE';$('modeDescription').textContent=final?'Final interior works':'Estimated interior works';$('termsHint').textContent=final?'These appear after the final quotation table.':'These appear after the estimate table.'}
 function switchMode(mode){if(mode===documentMode)return;if(mode==='final')finalDetailRows=finalDetailRows||cloneRows(detailRows);documentMode=mode;refreshModeUi();renderRates();update();$('preview').hidden=true}
 function renderRooms(){
   const root=$('rooms');
   root.innerHTML=rooms.map((room,index)=>`<div class="room"><label>Room / unit<input data-room="name" data-i="${index}" value="${room[0]}"></label><label>L<input type="number" step="0.1" data-room="l" data-i="${index}" value="${room[1]}"></label><label>H<input type="number" step="0.1" data-room="h" data-i="${index}" value="${room[2]}"></label><label>Qty<input data-room-qty="${index}" value="${(room[1]*room[2]).toFixed(1)}" readonly></label><button data-remove="${index}" title="Remove">×</button></div>`).join('');
+  enableArrowNavigation(root,'[data-room]','room');
   root.querySelectorAll('[data-room]').forEach(input=>{
     input.addEventListener('input',()=>{
       const index=+input.dataset.i,key=input.dataset.room;
@@ -43,6 +69,7 @@ function renderRates(){
   const modeName=isFinal?'final quotation':'estimated quotation';
   const add=`<div class="final-builder"><div class="final-builder-head"><b>Add a complete ${modeName} item</b><small>Create a new section or add to an existing one. L × H is used when both measurements are entered; otherwise Qty is used.</small></div><div class="final-builder-grid"><label>Section<select id="builderSection"><option value="">Create new section</option>${sections.map(section=>`<option value="${section}">${section}</option>`).join('')}</select></label><label>New section name<input id="builderNewSection" placeholder="Example: STUDY ROOM"></label><label class="builder-wide">Item description<input id="builderName" placeholder="Example: Study table with storage"></label><label>L<input id="builderL" type="number" min="0" step="0.1" placeholder="0"></label><label>H<input id="builderH" type="number" min="0" step="0.1" placeholder="0"></label><label>Qty<input id="builderQty" type="number" min="0" step="0.1" value="1"></label><label>Rate<input id="builderRate" type="number" min="0" step="0.01" value="0"></label><label>Unit<select id="builderUnit"><option value="sft">sft</option><option value="lot">lot</option></select></label></div><button class="add" id="addDetail">+ Add ${isFinal?'final':'estimated'} item</button></div>`;
   root.innerHTML=html+'</tbody></table></div>'+add;
+  enableArrowNavigation(root,'[data-d]','d');
   const saveField=input=>{
     const index=+input.dataset.i,key=input.dataset.d;
     active[index][key]=key==='name'||key==='unit'?input.value:(input.value===''?'':Number(input.value));
