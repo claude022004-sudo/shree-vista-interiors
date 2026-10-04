@@ -34,10 +34,10 @@ function renderRooms(){
 }
 function renderRates(){
   const root=$('rates'),active=quotationRows(),isFinal=documentMode==='final';
-  let last='',html=`<div class="detail-table-wrap"><table class="detail-editor"><thead><tr><th>S.No</th><th>Description</th><th>L</th><th>H</th><th>Qty</th><th>Rate</th><th>Unit</th>${isFinal?'<th></th>':''}</tr></thead><tbody>`;
+  let last='',html=`<div class="detail-table-wrap"><table class="detail-editor"><thead><tr><th>S.No</th><th>Description</th><th>L</th><th>H</th><th>Qty</th><th>Rate</th><th>Unit</th><th></th></tr></thead><tbody>`;
   active.forEach((row,index)=>{
-    if(row.section!==last){html+=`<tr class="editor-section"><td colspan="${isFinal?8:7}">${row.section}</td></tr>`;last=row.section}
-    html+=`<tr><td>${index+1}</td><td><input data-d="name" data-i="${index}" value="${row.name}"></td><td><input data-d="l" data-i="${index}" type="number" step="0.1" value="${row.l}"></td><td><input data-d="h" data-i="${index}" type="number" step="0.1" value="${row.h}"></td><td><input data-d="qty" data-i="${index}" type="number" step="0.1" value="${qty(row).toFixed(1)}"></td><td><input data-d="rate" data-i="${index}" type="number" step="0.01" value="${row.rate}"></td><td><select data-d="unit" data-i="${index}"><option ${row.unit==='sft'?'selected':''}>sft</option><option ${row.unit==='lot'?'selected':''}>lot</option></select></td>${isFinal?`<td><button class="remove-line" data-delete="${index}" title="Remove item">×</button></td>`:''}</tr>`;
+    if(row.section!==last){html+=`<tr class="editor-section"><td colspan="8">${row.section}</td></tr>`;last=row.section}
+    html+=`<tr><td>${index+1}</td><td><input data-d="name" data-i="${index}" value="${row.name}"></td><td><input data-d="l" data-i="${index}" type="number" step="0.1" value="${row.l}"></td><td><input data-d="h" data-i="${index}" type="number" step="0.1" value="${row.h}"></td><td><input data-d="qty" data-i="${index}" type="number" step="0.1" value="${qty(row).toFixed(1)}"></td><td><input data-d="rate" data-i="${index}" type="number" step="0.01" value="${row.rate}"></td><td><select data-d="unit" data-i="${index}"><option ${row.unit==='sft'?'selected':''}>sft</option><option ${row.unit==='lot'?'selected':''}>lot</option></select></td><td><button class="remove-line" data-delete="${index}" title="Remove item">×</button></td></tr>`;
   });
   const sections=[...new Set(active.map(row=>row.section))];
   const modeName=isFinal?'final quotation':'estimated quotation';
